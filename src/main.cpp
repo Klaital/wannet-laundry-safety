@@ -1,8 +1,23 @@
+#include "config.h"
+
 #include <SPI.h>
 #include <Adafruit_MAX31855.h>
 #include <Arduino.h>
 
+// #include <WiFiNINA.h>
+// #include <HttpClient.h>
+// #include <influxdb.h>
+#include <point.h>
+
+
 // #define DEBUG 1
+//
+// int wifi_status;
+// WiFiClient wifi_client;
+// HttpClient http_client("influx.klaital.com",  8086, &wifi_client);
+// Influx::InfluxDbClient influx(INFLUX_HOST, INFLUX_ORG, INFLUX_BUCKET, INFLUX_TOKEN);
+// Influx::Point dryer;
+// Influx::Point water;
 
 constexpr pin_size_t water_sensor_pin = A7;
 constexpr pin_size_t alarm_pin = A6;
@@ -34,12 +49,28 @@ void setup() {
 
     Serial.println("initializing alarm...");
     pinMode(alarm_pin, OUTPUT);
+
+#ifdef WIFI
+    Serial.println("initializing wifi...");
+    wifi_status = WiFi.begin(WIFI_SSID, WIFI_PASS);
+    dryer.set_field("room", "laundry");
+    water.set_field("room", "laundry");
+#endif
+
 }
 
 // TODO: fix the default once we're done debugging the alarm circuitry
 bool alarm_triggered = false;
 
 void loop() {
+
+#ifdef WIFI
+    wifi_status = WiFi.status();
+    if (wifi_status != WL_CONNECTED) {
+        Serial.println("Reconnecting to wifi...");
+        wifi_status = WiFi.begin(WIFI_SSID, WIFI_PASS);
+    }
+#endif
 
     if (alarm_triggered) {
         Serial.println("come hell or high water!");
@@ -93,5 +124,5 @@ void loop() {
         alarm_triggered = true;
     }
 
-    delay(5000);
+    delay(2500);
 }
